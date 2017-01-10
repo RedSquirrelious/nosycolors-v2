@@ -1,0 +1,15 @@
+<h1>{{target_handle}}'s Tweets</h1>
+
+
+{% if tweets %}
+	<ul>
+	{% for tweet in tweets %}
+		<li>{{tweet}}</a></li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p>You haven't uploaded any tweets yet.</p>
+{% endif %}
+
+
+

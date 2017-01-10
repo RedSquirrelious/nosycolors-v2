@@ -1,0 +1,12 @@
+
+{% if target_user_list %}
+	<ul>
+	{% for target in target_user_list %}
+		<li><a href='/twittering/{{target.id}}/'>{{target.target_name}}</a></li>
+	</ul>
+	{% endfor %}
+{% else %}
+	<p>You haven't picked a target user yet.</p>
+{% endif %}
+
+
