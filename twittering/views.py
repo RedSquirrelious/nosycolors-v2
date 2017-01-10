@@ -33,21 +33,22 @@ def target(request):
 # 	return render(request, 'twittering/tweeting.html', context)
 
 def tweeting(request):
-	  # if this is a POST request we need to process the form data
+
 	if request.method == 'POST':
 	    # create a form instance and populate it with data from the request:
 		form = HandleForm(request.POST)
-    # check whether it's valid:
+
 		if form.is_valid():
-  		# process the data in form.cleaned_data as required
+
 			target_handle = form.cleaned_data['target_handle']
-			message = 'lalalla'
-			rawtweepy = settings.AUTHORIZED_USER.user_timeline(screen_name=target_handle, count=8)
+			number_of_tweets = form.cleaned_data['number_of_tweets']
+			
+			rawtweepy = settings.AUTHORIZED_USER.user_timeline(screen_name=target_handle, count=number_of_tweets)
 
 			tweets = list(map(lambda t:t.text, rawtweepy))
-			test = tweets[0]
 
-			context = {'target_handle': target_handle, 'message': message, 'tweets': tweets, 'test': test}
+			context = {'target_handle': target_handle, 'tweets': tweets}
+
 # if a GET (or any other method) we'll create a blank form
 	else:
 		form = HandleForm()
