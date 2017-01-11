@@ -30,11 +30,11 @@ tf = Counter()
 
 #summarization practice
 
-# with open('mlk_dream_speech.txt', 'r') as f:
-#     content = f.read()
-#     summary = summarize(content, split=True, word_count=100)
-#     for i, sentence in enumerate(summary):
-#         print("%d) %s" % (i+1, sentence))
+with open('mlk_dream_speech.txt', 'r') as f:
+    content = f.read()
+    summary = summarize(content, split=True, word_count=100)
+    for i, sentence in enumerate(summary):
+        print("%d) %s" % (i+1, sentence))
 
 
 #processing tweets practice
@@ -48,15 +48,15 @@ def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
 
 
-for tweet in text_array:
-	tweet_tokenizer = TweetTokenizer()
+# for tweet in text_array:
+# 	tweet_tokenizer = TweetTokenizer()
 
-	tokens = process(tweet, tokenizer=tweet_tokenizer, stopwords=stopword_list)
+# 	tokens = process(tweet, tokenizer=tweet_tokenizer, stopwords=stopword_list)
 
-	tf.update(tokens)
+# 	tf.update(tokens)
 
-	for tag, count in tf.most_common(20):
-		print("{}: {}".format(tag, count))
+# 	for tag, count in tf.most_common(20):
+# 		print("{}: {}".format(tag, count))
 
 
 
