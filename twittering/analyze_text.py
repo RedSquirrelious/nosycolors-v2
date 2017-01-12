@@ -1,10 +1,12 @@
 from nltk import word_tokenize, sent_tokenize
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
+from nltk.sentiment.util import 
 
 from gensim.summarization import summarize
 
 import sys
+import re
 import string
 import json
 from collections import Counter
@@ -14,14 +16,14 @@ from collections import Counter
 
 
 #reduce my typing
-tokenizer = TweetTokenizer()
+# tokenizer = TweetTokenizer()
 
-text_array = open('rose_test_raw.txt').read().split('\n')
+# text_array = open('rose_test_raw.txt').read().split('\n')
 
-punct = list(string.punctuation)
-stopword_list = stopwords.words('english') + punct + ['rt', 'via', '...']
+# punct = list(string.punctuation)
+# stopword_list = stopwords.words('english') + punct + ['rt', 'via', '...', '…'] + re.match('@')
 
-tf = Counter()
+# tf = Counter()
 
 # tweet = tokenizer.tokenize(text_array[0])
 
@@ -30,21 +32,21 @@ tf = Counter()
 
 #summarization practice
 
-with open('mlk_dream_speech.txt', 'r') as f:
-    content = f.read()
-    summary = summarize(content, split=True, word_count=100)
-    for i, sentence in enumerate(summary):
-        print("%d) %s" % (i+1, sentence))
+# with open('mlk_dream_speech.txt', 'r') as f:
+#     content = f.read()
+#     summary = summarize(content, split=True, word_count=100)
+#     for i, sentence in enumerate(summary):
+#         print("%d) %s" % (i+1, sentence))
 
 
-#processing tweets practice
+# #processing tweets practice
 
-def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
+# def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
-	text = text.lower()
-	tokens = tokenizer.tokenize(text)
+# 	text = text.lower()
+# 	tokens = tokenizer.tokenize(text)
 
-	return [tok for tok in tokens if tok not in stopwords and not tok.isdigit()]
+# 	return [tok for tok in tokens if tok not in stopword_list and not tok.isdigit()]
 
 
 
@@ -55,14 +57,24 @@ def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
 # 	tf.update(tokens)
 
-# 	for tag, count in tf.most_common(20):
+# for tag, count in tf.most_common(20):
 # 		print("{}: {}".format(tag, count))
 
 
+aggravated = 'Fuck it, keys keys'
+
+happy = 'So happy!  I did a thing!'
 
 
 
 
-
-
-
+import itertools
+from nltk.collocations import BigramCollocationFinder
+from nltk.metrics import BigramAssocMeasures
+ 
+def bigram_word_feats(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
+    bigram_finder = BigramCollocationFinder.from_words(words)
+    bigrams = bigram_finder.nbest(score_fn, n)
+    return dict([(ngram, True) for ngram in itertools.chain(words, bigrams)])
+ 
+evaluate_classifier(bigram_word_feats)
