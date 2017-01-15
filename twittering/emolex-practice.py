@@ -1,293 +1,228 @@
-import nltk.classify.util
-from nltk.classify import NaiveBayesClassifier
-from nltk.metrics import *
 import ast
 import re
+import sys
+import re
+import string
+import json
+import os.path
+
 import collections
-import nltk.classify.util, nltk.metrics
+from collections import Counter
+import operator
+from operator import itemgetter
+
+import mysql.connector
+from mysql.connector import MySQLConnection, Error, connect, errorcode
+# import mysqldb.converters
+# from mysqldb.converters import conversions
+# conv=converters.conversions.copy()
+# conv[246]=float    # convert decimals to floats
+# conv[10]=str 
+
+# NLTK
+import nltk.classify.util
 from nltk.classify import NaiveBayesClassifier
-
-
-import itertools
 from nltk.collocations import BigramCollocationFinder
-
+from nltk.metrics import *
+# import nltk.classify.util, nltk.metrics
+from nltk import word_tokenize, sent_tokenize
+from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
 
+# GENSIM
+from gensim.summarization import summarize
+
+import itertools
+
+# ********LEXICON DATABASE ACCESS***********
+
+with open(os.path.dirname(__file__) + '../.env') as secrets:
+
+	lies = dict(ast.literal_eval(secrets.read()))
+	USER_NAME = lies['USER_NAME']
+	DATABASE_NAME = lies['DATABASE_NAME']
+	DATABASE_KEY = lies['DATABASE_KEY']
+	HOST = lies['HOST']
+
+# *******************
+
+# *******************
+tokenizer = TweetTokenizer()
+
+test_sentence = 'abandon the abacus bazooka'
+
+punct = list(string.punctuation)
+stopword_list = stopwords.words('english') + punct + ['rt', 'via', '...', '…']
+# *******************
 
 
-first_pass = open('NRC-emolex-short-practice.txt').read().strip().replace('\t', " ").replace(" ", ",").split('\n')
-
-# first_pass = open('NRC-emolex-short-practice.txt').read().strip().split('\n')
-
-# print(first_pass)
-
-second_pass = list(map(lambda w:w.split(','), first_pass))
-
-print(second_pass[0])
-
-
-
-
-anger = {}
-anticipation = {}
-disgust = {}
-fear = {}
-joy = {}
-negative = {}
-positive = {}
-sadness = {}
-surprise = {}
-trust = {}
-
-anger_array = []
-anticipation_array = []
-disgust_array = []
-fear_array = []
-joy_array = []
-negative_array = []
-positive_array = []
-sadness_array = []
-surprise_array = []
-trust_array = []
-
-word_array = ['abandoned', 'anger', '1']
-
-def third_pass(word_array, sentiment_array):
-	if word_array[-1] == "1":
-		sentiment_array.append(word_array[0])
-
-third_pass(word_array, anger_array)
-
-print(anger_array)
-		
-anger.update(anger_array)
-# anticipation.update(anticipation_array)
-# disgust.update(disgust_array)
-# fear.update(fear_array)
-# joy.update(joy_array)
-# negative.update(negative_array)
-# positive.update(positive_array)
-# sadness.update(sadness_array)
-# surprise.update(surprise_array)
-# trust.update(trust_array)	
-
-print(anger)
-
-def fourthpass(word_array, sentiment_array):
-	for array in word_array:
-		third_pass(array, sentiment_array)
-
-
-# fourthpass = fourthpass(second_pass, anger_array)
-# print(anger_array)
-# for string in first_pass:
-# 	if string[-1] == "1":
-# 		print('yes')
-# 	else:
-# 		print('no')
-
-# test_word = 'aback\tanger\t0'
-# print(test_word)
-
-# second_pass = test_word.split('\t', 1)[0]
-
-# # print(second_pass)
-
-# third_pass = test_word.split('\t', 2)
-
-# print(third_pass)
-# # print(third_pass[1])
-
-# hash = {}
-
-# # print(type(third_pass[0]))
-
-# # hash[third_pass[0]] = third_pass[1]
-
-# # hash[str(third_pass[0])][str(third_pass[1])]
-# # print(hash)
-
-# array = []
-# set = {}
-
-# def assignvalue(word, set):
-# 	default = 0
+def prep_tweets(textfile):
 	
-# 	if word[-1] == "1":
-# 		key = word.split('\t', 2)[0]
-# 		value = word.split('\t', 2)[1]
-
-		
-
-# 		# dictionary.setdefault(key, default)
-
-# 		# if value == "anger":
-# 		# 	dictionary[key] += 1
-# 		# if value == "anticipation":
-# 		# 	dictionary[key] += 2
-# 		# if value == "disgust":
-# 		# 	dictionary[key] += 4
-# 		# if value == "fear":
-# 		# 	dictionary[key] += 8
-# 		# if value == "joy":
-# 		# 	dictionary[key] += 16
-# 		# if value == "negative":
-# 		# 	dictionary[key] += 32
-# 		# if value == "positive":
-# 		# 	dictionary[key] += 64
-# 		# if value == "sadness":
-# 		# 	dictionary[key] += 128
-# 		# if value == "surprise":
-# 		# 	dictionary[key] += 256
-# 		# if value == "trust":
-# 		# 	dictionary[key] += 512
+	first_step = open(textfile).read().strip().replace('\t', " ").replace(" ", ",").split('\n')
+	tweet_list = list(map(lambda w:w.split(','), first_step))
+	
+	return tweet_list
 
 
 
-# for wordblob in first_pass:
-# 	assignvalue(wordblob, dictionary)
+def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
-# print(dictionary)
+	text = text.lower()
+	tokens = tokenizer.tokenize(text)
 
-test_sentence = 'abandon the abacus'
+	return [tok for tok in tokens if tok not in stopword_list and not tok.isdigit()]
 
-sentence_hash = {"anger": 0, "anticipation": 0, "disgust": 0, "fear": 0, "joy": 0, "negative": 0, "positive": 0, "sadness": 0, "surprise": 0, "trust": 0}
 
-def fifthpass(word, set):
-	if set[word]:
-		return True
+test_list = process(test_sentence, tokenizer=TweetTokenizer(), stopwords=stopword_list)
+
+
+
+def query_lexicon(host, database, user, password, tweet_word):
+	cnx = mysql.connector.connect(user=user, password=password, host=host, database=database)
+	cursor = cnx.cursor()
+
+	query = ('SELECT word_id, word ')
+
+	cursor.execute(query)
+
+	for (emotions) in cursor:
+		print(emotions)
+
+	cursor.close()
+	cnx.close()	
+
+
+
+
+	# 	# anger = float(anger[1])
+	# 	# anticipation = float(anticipation[1])
+	# 	# disgust = float(disgust[1])		
+	# 	# fear = float(fear[1])	
+	# 	# joy = float(joy[1])
+	# 	# sadness = float(sadness[1])
+	# 	# surprise = float(surprise[1])
+	# 	y = float(trust[1])
+
+	# emotion_set = {'anger': anger, 'anticipation': anticipation, 'disgust': disgust, 'fear': fear, 'joy': joy, 'sadness': sadness, 'surprise': surprise, 'trust': trust}
+
+	# print(y)
+
+	cursor.close()
+	cnx.close()
+
+# connect_database(USER_NAME, DATABASE_KEY, HOST, DATABASE_NAME)
+
+# query_emolex(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, 'death')
+
+def query_emolex(host, database, user, password, tweet_word):
+	cnx = mysql.connector.connect(user=user, password=password, host=host, database=database)
+	cursor = cnx.cursor(dictionary=True)
+	# cursor = cnx.cursor()
+
+	query = ("SELECT w.word, e.emotion, w.count, wes.score, wes.word_id, wes.emotion_id, w.id, e.id FROM words w JOIN word_emotion_score wes ON wes.word_id = w.id JOIN emotions e ON e.id = wes.emotion_id WHERE w.word = '%s'" % tweet_word)
+
+	cursor.execute(query)
+
+	patch = cursor.fetchall()
+
+	wheelbarrow = []
+
+	for cabbage in patch:
+		average_score = cabbage['score']/cabbage['count']
+		green = (cabbage['emotion'], average_score)
+		wheelbarrow.append(green)
+
+	return wheelbarrow
+
+
+	cursor.close()
+	cnx.close()
+
+
+
+# print(query_emolex(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, 'baby'))
+
+def find_strongest_emotion(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, tweet_word):
+
+	litter = query_emolex(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, tweet_word)
+
+	pick = max(litter, key=itemgetter(1))[0]
+	print(pick)
+
+
+find_strongest_emotion(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, 'baby')
+
+
+
+
+
+def connect_database(user, password, host, database):
+	try:
+		cnx = mysql.connector.connect(user=user, password=password, host=host, database=database)
+
+		if cnx.is_connected():
+			print('connection established.')
+		else:
+			print('connection failed.')
+	except mysql.connector.Error as err:
+		if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+			print("Something is wrong with your username or password")
+		elif err.errno == errorcode.ER_BAD_DB_ERROR:
+			print("Database does not exist")
+		else:
+			print(err)
 	else:
-		return False
+		cnx.close()
 
-def sixthpass(sentence, set1, set2, set3, set4, set5, set6, set7, set8, set9, set10): 
+# connect_database(USER_NAME, DATABASE_KEY, HOST, DATABASE_NAME)
+
+# cnx = mysql.connector.connect(user=USER_NAME, password=DATABASE_KEY, host=HOST, database=DATABASE_NAME)
+
+# cursor = cnx.cursor()
+
+# query = ("SELECT AVG(joy) FROM twittering.emolex WHERE word = 'baby'")
+
+# tweet_word = 'rabbit'
+
+# cursor.execute(query)
+
+# for (joy) in cursor:
+# 	print("Joy: {}".format(joy)) 
+# cursor.close()
+# cnx.close()
+
+
+
+
+
+def sixthpass(sentence_array, anger_set, anticipation_set, disgust_set, fear_set, joy_set, negative_set, positive_set, sadness_set, surprise_set, trust_set):
+	
 	sentence_hash = {"anger": 0, "anticipation": 0, "disgust": 0, "fear": 0, "joy": 0, "negative": 0, "positive": 0, "sadness": 0, "surprise": 0, "trust": 0}
 
-	for word in sentence:
-		if set1[word]:
+	for word in sentence_array:
+		# print(word)
+		if word in anger_set:
 			sentence_hash['anger'] += 1
-		if set2[word]:
+		if word in anticipation_set:
 			sentence_hash['anticipation'] += 1
-		if set3[word]:
+		if word in disgust_set:
 			sentence_hash['disgust'] += 1
-		if set4[word]:
+		if word in fear_set:
 			sentence_hash['fear'] += 1
-		if set5[word]:
-			sentence_hash['joy'] += 1
-		if set6[word]:
+		if word in joy_set:
+			sentence_joy['joy'] += 1
+		if word in negative_set:
 			sentence_hash['negative'] += 1
-		if set7[word]:
+		if word in positive_set:
 			sentence_hash['positive'] += 1
-		if set8[word]:
+		if word in sadness_set:
 			sentence_hash['sadness'] += 1
-		if set9[word]:
+		if word in surprise_set:
 			sentence_hash['surprise'] += 1
-		if set10[word]:
+		if word in trust_set:
 			sentence_hash['trust'] += 1
 	return sentence_hash
 
-seventhpass = sixthpass(test_sentence, )
-# 		dictionary.setdefault(word, 0)
 
-# 		if dictionary[word] == 'anger':
-# 			sentence_hash['anger'] += 1
-# 		if dictionary[word] == 'anticipation':
-# 			sentence_hash['anticipation'] += 1
-# 		if dictionary[word] =='disgust':
-# 			sentence_hash['disgust'] += 1
-# 		if dictionary[word] == 'fear':
-# 			sentence_hash['fear'] += 1
-# 		if dictionary[word] == 'joy':
-# 			sentence_hash['joy'] += 1
-# 		if dictionary[word] == 'negative':
-# 			sentence_hash['negative'] += 1
-# 		if dictionary[word] == 'positive':
-# 			sentence_hash['positive'] += 1
-# 		if dictionary[word] == 'anticipation':
-# 			sentence_hash['sadness'] += 1
-# 		if dictionary[word] == 'anticipation':
-# 			sentence_hash['surprise'] += 1
-# 		if dictionary[word] == 'anticipation':
-# 			sentence_hash['trust'] += 1
+important_punctuation = '¯\\_(ツ)_/¯'
 
-# 	return sentence_hash
-
-
-
-# print(checksentence(test_sentence, dictionary))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # sentence_hash = {"anger": 0, "anticipation": 0, "disgust": 0, "fear": 0, "joy": 0, "negative": 0, "positive": 0, "sadness": 0, "surprise": 0, "trust": 0}
-
-# # anger = 1
-# # anticipation = 2
-# # disgust = 4
-# # fear = 8
-# # joy = 16
-# # negative = 32
-# # positive = 64
-# # sadness = 128
-# # surprise = 256
-# # trust = 512
-
-# def checkdictionary(sentence, dictionary):
-# 	default = 0
-# 	sentence_hash = {"anger": 0, "anticipation": 0, "disgust": 0, "fear": 0, "joy": 0, "negative": 0, "positive": 0, "sadness": 0, "surprise": 0, "trust": 0}
-
-# 	anger = 1
-# 	anticipation = 2
-# 	disgust = 4
-# 	fear = 8
-# 	joy = 16
-# 	negative = 32
-# 	positive = 64
-# 	sadness = 128
-# 	surprise = 256
-# 	trust = 512
-
-# 	for word in sentence:
-# 		dictionary.setdefault(word, default)
-
-# 		if dictionary[word]:
-# 			value = dictionary[word]
-
-# 			if value - anger >= 0:
-# 				sentence_hash['anger'] += 1
-# 			if value - anticipation >= 0:
-# 				sentence_hash['anticipation'] += 1
-# 			if value - disgust >= 0:
-# 				sentence_hash['disgust'] += 1
-# 			if value - fear >= 0:
-# 				sentence_hash['fear'] += 1
-# 			if value - joy >= 0:
-# 				sentence_hash['joy'] += 1
-# 			if value - negative >= 0:
-# 				sentence_hash['negative'] += 1
-# 			if value - positive >= 0:
-# 				sentence_hash['positive'] += 1
-# 			if value - sadness >= 0:
-# 				sentence_hash['sadness'] += 1
-# 			if value - surprise >= 0:
-# 				sentence_hash['surprise'] += 1
-# 			if value - trust >= 0:
-# 				sentence_hash['trust'] += 1
-
-# 	return sentence_hash
-
-
-# # print(checkdictionary(test_sentence, dictionary))
-
-#  
