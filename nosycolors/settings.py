@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 import ast
 import tweepy
-from tweepy import OAuthHandler
+from tweepy import OAuthHandler, AppAuthHandler
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,13 +36,18 @@ with open('.env') as secrets:
 	ACCESS_TOKEN = lies['ACCESS_TOKEN']
 	ACCESS_SECRET =	lies['ACCESS_SECRET']
 	CALLBACK_URL = lies['CALLBACK_URL']
+	HOST = lies['HOST']
 
 # *************************************
 # NOT SURE IF THIS BELONGS HERE??
 TWITTER_AUTH = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 TWITTER_AUTH.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
 
-AUTHORIZED_USER = tweepy.API(TWITTER_AUTH)
+# has a greater rate limit than OAuth
+# TWITTER_AUTH = tweepy.AppAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+
+
+AUTHORIZED_USER = tweepy.API(TWITTER_AUTH, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 # *************************************
 
 # SECURITY WARNING: don't run with debug turned on in production!
