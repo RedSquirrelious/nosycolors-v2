@@ -1,0 +1,27 @@
+<h1>{{target_handle}}'s Words</h1>
+
+<h3>{{test_dealie}}</h3>
+
+{% if tweets %}
+	<ul>
+	{% for tweet in tweets %}
+		<li>{{tweet}}</a></li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p>You haven't uploaded any tweets yet.</p>
+{% endif %}
+
+{% if emotions %}
+	<ul>
+	{% for emotion in emotions %}
+		{% if emotion %}
+			<li>{{emotion}}</li>
+		{% endif %}
+	{% endfor %}
+{% else %}
+	<p>The emotion classifier isn't working.  Nuts.</p>
+{% endif %}
+
+
+
