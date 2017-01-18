@@ -24,7 +24,7 @@ from nltk.corpus import stopwords
 
 from nltk.stem import PorterStemmer
 from nltk.tokenize import sent_tokenize, word_tokenize
-
+from nltk.stem import WordNetLemmatizer
 
 # GENSIM, language analysis
 from gensim.summarization import summarize
@@ -77,20 +77,27 @@ for w in word_tokens:
     if w not in stop_words:
         filtered_sentence.append(w)
 
-print(word_tokens)
-print(filtered_sentence)
+# print(word_tokens)
+# print(filtered_sentence)
 
 
 ps = PorterStemmer()
 
 example_words = ["python","pythoner","pythoning","pythoned","pythonly"]
+more_example_words = ['rich', 'richer', 'richly', 'richest']
 
-for w in example_words:
-    print(ps.stem(w))
+# for w in more_example_words:
+#     print(ps.stem(w))
 
 new_text = "It is important to by very pythonly while you are pythoning with python. All pythoners have pythoned poorly at least once."
 
 words = word_tokenize(new_text)
 
-for w in words:
-    print(ps.stem(w))
+# for w in words:
+#     print(ps.stem(w))
+
+
+wnl = WordNetLemmatizer()
+
+for w in more_example_words:
+	print(wnl.lemmatize(w))
