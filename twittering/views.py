@@ -50,31 +50,6 @@ def target(request):
 	return render(request, 'twittering/target.html', context)
 
 
-def tweeting(request):
-
-	if request.method == 'POST':
-	    # create a form instance and populate it with data from the request:
-		form = HandleForm(request.POST)
-
-		if form.is_valid():
-
-			target_handle = form.cleaned_data['target_handle']
-			number_of_tweets = form.cleaned_data['number_of_tweets']
-			
-			rawtweepy = settings.AUTHORIZED_USER.user_timeline(screen_name=target_handle, count=number_of_tweets)
-
-			tweets = list(map(lambda t:t.text, rawtweepy))
-
-			context = {'target_handle': target_handle, 'tweets': tweets}
-
-# if a GET (or any other method) we'll create a blank form
-	else:
-		form = HandleForm()
-
-
-	
-	return render(request, 'twittering/tweeting.html', context)
-
 
 def detail(request, target_id):
 	try:
@@ -197,3 +172,57 @@ def classify(request):
 
 	
 	return render(request, 'twittering/classify.html', context)
+
+
+
+
+def tweeting(request):
+
+	if request.method == 'POST':
+	    # create a form instance and populate it with data from the request:
+		form = HandleForm(request.POST)
+
+		if form.is_valid():
+
+			target_handle = form.cleaned_data['target_handle']
+			number_of_tweets = form.cleaned_data['number_of_tweets']
+			
+			rawtweepy = settings.AUTHORIZED_USER.user_timeline(screen_name=target_handle, count=number_of_tweets)
+
+				
+			user = settings.AUTHORIZED_USER.get_user(screen_name=target_handle)
+			target = dict()
+			target['name'] = user.name
+			target['screen_name'] = user.screen_name
+
+			tweets = []
+
+			for raw_tweet in rawtweepy:
+				tweet = {}
+
+				tweet_words = process(raw_tweet.text)
+				
+				strongest_emotions = find_strongest_emotions_in_tweet(settings.HOST, settings.DATABASE_NAME, settings.USER_NAME, settings.DATABASE_KEY, tweet_words)
+
+				if strongest_emotions:
+					strongest_emotions = ", ".join(strongest_emotions)
+					tweet['emotion'] = strongest_emotions
+				else:
+					tweet['emotion'] = 'Unable to process this tweet'
+
+				tweet['text'] = (raw_tweet.text)
+
+				tweets.append(tweet)
+
+
+
+			context = {'target_handle': target_handle, 'tweets': tweets, 'target': target }
+
+# if a GET (or any other method) we'll create a blank form
+	else:
+		form = HandleForm()
+
+
+	
+	return render(request, 'twittering/tweeting.html', context)
+
