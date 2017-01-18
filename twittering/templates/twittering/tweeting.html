@@ -1,15 +1,19 @@
-<h1>{{target_handle}}'s Tweets</h1>
-
-
 {% if tweets %}
+<h1>{{target.screen_name}} aka {{target.name}}</h1>
 	<ul>
 	{% for tweet in tweets %}
-		<li>{{tweet}}</a></li>
+		<h5>Tweet Text:</h5>
+			<p>{{tweet.text}}</p>
+		<h5>Tweet Emotions:</h5>
+			<p>{{tweet.emotion}}</p>
+	
 	{% endfor %}
 	</ul>
 {% else %}
-	<p>You haven't uploaded any tweets yet.</p>
+	<p>{{target_handle}} hasn't uploaded any tweets yet.</p>
 {% endif %}
+
+
 
 
 
