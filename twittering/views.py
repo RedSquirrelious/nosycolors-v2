@@ -1,25 +1,24 @@
-from django.shortcuts import render, redirect
 
-from django.urls import reverse
-
-from django.http import HttpResponse, Http404, HttpResponseRedirect
-
-from .models import Tweet, Target
-
-from .forms import HandleForm
+from operator import itemgetter
+import string
+import re
 
 from django.conf import settings
+from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.shortcuts import render, redirect
+from django.urls import reverse
+
+
+from .models import Tweet, Target
+from .forms import HandleForm
+
+
 
 # FOR LANGUAGE ANALYSIS
-import string
-
-## needed for identifying emotion with highest score
-import operator
-from operator import itemgetter
-
 
 
 ## needed for MySQL
+
 import mysql.connector
 from mysql.connector import MySQLConnection, Error, connect, errorcode
 
@@ -85,6 +84,9 @@ def detail(request, target_id):
 	else:
 		return render(request, 'twittering/detail.html', {'target': target}) 
 
+
+
+
 # NEEDED FOR CLASSIFY
 def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
@@ -93,15 +95,22 @@ def process(text, tokenizer=TweetTokenizer(), stopwords=[]):
 
 	return [tok for tok in tokens if tok not in stopword_list and not tok.isdigit()]
 
-# NEEDED FRO CLASSIFY
+
+
+
+# NEEDED FOR CLASSIFY
 def query_emolex(host, database, user, password, tweet_word):
+
 	cnx = mysql.connector.connect(user=user, password=password, host=host, database=database)
 	cursor = cnx.cursor(dictionary=True)
 
+# make sure tweets don't break the database
+	regex = re.compile('[^a-zA-Z/\s]')
+	clean_tweet_word = regex.sub('', tweet_word)
+	
+	query = "SELECT w.word, e.emotion, w.count, wes.score, wes.word_id, wes.emotion_id, w.id, e.id FROM words w JOIN word_emotion_score wes ON wes.word_id = w.id JOIN emotions e ON e.id = wes.emotion_id WHERE w.word = %s"
 
-	query = ("SELECT w.word, e.emotion, w.count, wes.score, wes.word_id, wes.emotion_id, w.id, e.id FROM words w JOIN word_emotion_score wes ON wes.word_id = w.id JOIN emotions e ON e.id = wes.emotion_id WHERE w.word = '%s'" % tweet_word)
-
-	cursor.execute(query)
+	cursor.execute(query, [clean_tweet_word])
 
 	results = cursor.fetchall()
 
@@ -118,24 +127,30 @@ def query_emolex(host, database, user, password, tweet_word):
 	cursor.close()
 	cnx.close()
 
-# NEEDED FOR CLASSIFY
 
+
+
+# NEEDED FOR CLASSIFY
 def find_strongest_emotion_for_word(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, tweet_word):
 
 	emotion_list = query_emolex(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, tweet_word)
-	if not emotion_list:
-		return []
-	highest_scoring_emotion = max(emotion_list, key=itemgetter(1))[0]
-	return highest_scoring_emotion
+	
+	if emotion_list:
+		highest_scoring_emotion = max(emotion_list, key=itemgetter(1))[0]
+		return highest_scoring_emotion
+
+
+
 
 # NEEDED FOR CLASSIFY 
-
 def find_strongest_emotions_in_tweet(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, word_list):
 	emotion_list = []
 	
 	for word in word_list:
 		highest_scoring_emotion = find_strongest_emotion_for_word(HOST, DATABASE_NAME, USER_NAME, DATABASE_KEY, word)
-		emotion_list.append(highest_scoring_emotion)
+
+		if highest_scoring_emotion:
+			emotion_list.append(highest_scoring_emotion)
 	
 	return emotion_list
 
@@ -156,16 +171,24 @@ def classify(request):
 
 			tweets = list(map(lambda t:t.text, rawtweepy))
 
-			tester = tweets[0]
-
-			tweet_words = process(tester)
-
-			emotions_list = find_strongest_emotions_in_tweet(settings.HOST, settings.DATABASE_NAME, settings.USER_NAME, settings.DATABASE_KEY, tweet_words)
+			tweets_and_feels = []
 
 
+			for tweet in tweets:
+				feels_and_tweets = dict()
 
-			context = {'target_handle': target_handle, 'tweets': tweets, 'emotions': emotions_list}
-			# context = {'target_handle': target_handle, 'tweets': tweets}
+				tweet_words = process(tweet)
+				strongest_emotion = find_strongest_emotions_in_tweet(settings.HOST, settings.DATABASE_NAME, settings.USER_NAME, settings.DATABASE_KEY, tweet_words)
+
+				feels_and_tweets['text'] = tweet
+				if strongest_emotion:
+					feels_and_tweets['emotion'] = strongest_emotion
+				else:
+					feels_and_tweets['emotion'] = 'Unable to process this tweet'
+				tweets_and_feels.append(feels_and_tweets.copy())
+
+			context = {'target_handle': target_handle, 'tweets': tweets_and_feels}
+
 
 # if a GET (or any other method) we'll create a blank form
 	else:
