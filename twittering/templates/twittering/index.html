@@ -1,18 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
 
-<form action="/twittering/tweeting/" method="post">
+<head>
+    <meta charset="UTF-8">
+    <title>Curious much?</title>
+</head>
 
-    {% csrf_token %}
+<body>
+    <form action="/twittering/tweeting/" method="post">
+        {% csrf_token %}
+        <label for="target_handle">Twitter Handle: </label>
+        <input id="target_handle" type="text" name="target_handle">
+        <label for="number_of_tweets">How many tweets? (Max. is 100) </label>
+        <input id="number_of_tweets" type="integer" name="number_of_tweets">
+        <input type="submit" value="OK">
+    </form>
+<!--     <a href="{% url 'index' %}">See Tweets and Feels</a> -->
+    <a href="{% url 'about' %}">About This Site</a>
+</body>
 
-    <label for="target_handle">Twitter Handle: </label>
-
-    <input id="target_handle" type="text" name="target_handle">
-
-    <label for="number_of_tweets">How many tweets?  (Max. is 100) </label>
-
-    <input id="number_of_tweets" type="integer" name="number_of_tweets">
-
-    
-
-
-    <input type="submit" value="OK">
-</form>
+</html>
