@@ -44,20 +44,9 @@ def index(request):
 
 
 
-def target(request):
-	target_user_list = Target.objects.order_by('-target_name')[:5]
-	context = {'target_user_list': target_user_list}
-	return render(request, 'twittering/target.html', context)
+def about(request):
+	return render(request, 'twittering/about.html', context)
 
-
-
-def detail(request, target_id):
-	try:
-		target = Target.objects.get(pk=target_id)
-	except Target.DoesNotExist:
-		raise Http404("No such target!")
-	else:
-		return render(request, 'twittering/detail.html', {'target': target}) 
 
 
 
