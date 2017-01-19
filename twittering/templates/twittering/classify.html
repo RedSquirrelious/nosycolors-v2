@@ -1,22 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thought So.</title>
+</head>
 <h1>{{target_handle}}'s Words</h1>
 
+<body>
+    {% if tweets %}
+    <ul>
+        {% for tweet in tweets %}
+        <h5>Tweet:</h5>
+        <p>{{tweet.text}}</p>
+        <p>Feelings: {{tweet.emotion}}</p>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You haven't uploaded any tweets yet.</p>
+    {% endif %}
+    <!--     <a href="{% url 'index' %}">See Tweets and Feels</a> -->
+    <a href="{% url 'about' %}">About This Site</a>
+</body>
 
-{% if tweets %}
-	<ul>
-	{% for tweet in tweets %}
-		<h5>Tweet:</h5>
-		<p>{{tweet.text}}</p>
-		<p>Feelings: {{tweet.emotion}}</p>
-		
-	{% endfor %}
-	</ul>
-{% else %}
-	<p>You haven't uploaded any tweets yet.</p>
-{% endif %}
-
-
-
-
-
-
- 
+</html>
